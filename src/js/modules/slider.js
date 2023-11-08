@@ -4,8 +4,6 @@ export default class Slider {
         this.slides = [...this.page.children];
         this.btns = document.querySelectorAll(btns);
         this.slideIndex = 1;
-
-        console.log(this.slides)
     }
 
     showSlides(n) {
