@@ -98,6 +98,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_slider_slider_main__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./modules/slider/slider-main */ "./src/js/modules/slider/slider-main.js");
 /* harmony import */ var _modules_slider_slider_mini__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modules/slider/slider-mini */ "./src/js/modules/slider/slider-mini.js");
 /* harmony import */ var _modules_playVideo__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/playVideo */ "./src/js/modules/playVideo.js");
+/* harmony import */ var _modules_forms__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/forms */ "./src/js/modules/forms.js");
+
 
 
 
@@ -133,7 +135,123 @@ window.addEventListener('DOMContentLoaded', () => {
   feedSlider.init();
   const player = new _modules_playVideo__WEBPACK_IMPORTED_MODULE_2__["default"]('.showup .play', '.overlay');
   player.init();
+  new _modules_forms__WEBPACK_IMPORTED_MODULE_3__["default"]('.form').init();
 });
+
+/***/ }),
+
+/***/ "./src/js/modules/forms.js":
+/*!*********************************!*\
+  !*** ./src/js/modules/forms.js ***!
+  \*********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Form; });
+class Form {
+  constructor(forms) {
+    this.forms = document.querySelectorAll(forms);
+    this.inputs = document.querySelectorAll('input');
+    this.message = {
+      loading: 'Загрузка...',
+      success: 'Спасибо! Скоро мы с вами свяжемся!',
+      failure: 'Что-то пошло не так...'
+    };
+    this.path = 'http://localhost:8000/question.php';
+  }
+  clearInputs() {
+    this.inputs.forEach(item => {
+      item.value = '';
+    });
+  }
+  checkMailInputs() {
+    const mailInputs = document.querySelectorAll('[type="email"]');
+    mailInputs.forEach(input => {
+      input.addEventListener('keypress', function (e) {
+        if (e.key.match(/[^a-z 0-9 @ \.]/ig)) {
+          e.preventDefault();
+        }
+      });
+    });
+  }
+  initMask() {
+    let setCursorPosition = (pos, elem) => {
+      elem.focus();
+      if (elem.setSelectionRange) {
+        elem.setSelectionRange(pos, pos);
+      } else if (elem.createTextRange) {
+        let range = elem.createTextRange();
+        range.collapse(true);
+        range.moveEnd('character', pos);
+        range.moveStart('character', pos);
+        range.select();
+      }
+    };
+    function createMask(event) {
+      let matrix = '+1 (___) ___-____',
+        i = 0,
+        def = matrix.replace(/\D/g, ''),
+        val = this.value.replace(/\D/g, '');
+      if (def.length >= val.length) {
+        val = def;
+      }
+      this.value = matrix.replace(/./g, function (a) {
+        return /[_\d]/.test(a) && i < val.length ? val.charAt(i++) : i >= val.length ? '' : a;
+      });
+      if (event.type === 'blur') {
+        if (this.value.length == 2) {
+          this.value = '';
+        }
+      } else {
+        setCursorPosition(this.value.length, this);
+      }
+    }
+    let inputs = document.querySelectorAll('[name="phone"]');
+    inputs.forEach(input => {
+      input.addEventListener('input', createMask);
+      input.addEventListener('focus', createMask);
+      input.addEventListener('blur', createMask);
+    });
+  }
+  async postData(url, data) {
+    let res = await fetch(url, {
+      method: "POST",
+      body: data
+    });
+    return await res.text();
+  }
+  init() {
+    this.checkMailInputs();
+    this.initMask();
+    this.forms.forEach(item => {
+      item.addEventListener('submit', e => {
+        e.preventDefault();
+        let statusMessage = document.createElement('div');
+        statusMessage.style.cssText = `
+                    margin-top: 15px;
+                    font-size: 18px;
+                    color: grey;
+                `;
+        item.parentNode.appendChild(statusMessage);
+        statusMessage.textContent = this.message.loading;
+        const formData = new FormData(item);
+        this.postData(this.path, formData).then(res => {
+          console.log(res);
+          statusMessage.textContent = this.message.success;
+        }).catch(() => {
+          statusMessage.textContent = this.message.failure;
+        }).finally(() => {
+          this.clearInputs();
+          setTimeout(() => {
+            statusMessage.remove();
+          }, 6000);
+        });
+      });
+    });
+  }
+}
 
 /***/ }),
 
